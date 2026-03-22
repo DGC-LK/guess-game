@@ -1,52 +1,131 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guess Game</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-        input {
-            padding: 10px;
-            width: 50px;
-            text-align: center;
-        }
-        button {
-            padding: 10px 20px;
-            margin-top: 10px;
-        }
-        .message {
-            margin-top: 20px;
-            font-size: 20px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>猜數字遊戲 Pro+</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #74ebd5, #9face6);
+    text-align: center;
+    padding: 20px;
+}
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    max-width: 400px;
+    margin: auto;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+h2 {
+    margin-bottom: 10px;
+}
+input, button {
+    padding: 12px;
+    margin: 8px;
+    font-size: 16px;
+    width: 80%;
+    border-radius: 10px;
+    border: none;
+}
+button {
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+}
+button:hover {
+    background: #45a049;
+}
+#result {
+    font-size: 18px;
+    margin-top: 10px;
+}
+.rank {
+    text-align: left;
+    margin-top: 15px;
+}
+@media (max-width: 600px) {
+    .card {
+        max-width: 100%;
+        padding: 15px;
+    }
+    h2 { font-size: 24px; }
+    input, button { font-size: 14px; width: 90%; }
+    #result { font-size: 16px; }
+}
+</style>
 </head>
 <body>
-    <h1>Guess the Number!</h1>
-    <input type="number" id="guessInput" placeholder="Enter a number">
-    <button id="guessButton">Guess</button>
-    <div class="message" id="message"></div>
-    <script>
-        let randomNumber = Math.floor(Math.random() * 100) + 1;
-        const messageDiv = document.getElementById('message');
-        document.getElementById('guessButton').addEventListener('click', function() {
-            const userGuess = parseInt(document.getElementById('guessInput').value);
-            if (userGuess === randomNumber) {
-                messageDiv.innerText = 'Congratulations! You guessed it!';
-            } else if (userGuess < randomNumber) {
-                messageDiv.innerText = 'Too low! Try again.';
-            } else {
-                messageDiv.innerText = 'Too high! Try again.';
-            }
-        });
-    </script>
+<div class="card">
+<h2>🎯 猜數字遊戲</h2>
+<button onclick="startGame()">🎮 開始遊戲</button>
+<div id="game" style="display:none;">
+    <p>請猜 1~100</p>
+    <input type="number" id="guess">
+    <button onclick="checkGuess()">猜！</button>
+    <p id="result"></p>
+    <p id="count"></p>
+    <button onclick="restart()">重新開始</button>
+</div>
+<h3>🏆 排行榜（最少次數）</h3>
+<div class="rank" id="rank"></div>
+</div>
+<script>
+let target = 0;
+let count = 0;
+// 開始遊戲（電腦出題）
+function startGame() {
+    target = Math.floor(Math.random() * 100) + 1;
+    count = 0;
+    document.getElementById("game").style.display = "block";
+    document.getElementById("result").innerText = "";
+    document.getElementById("count").innerText = "";
+}
+// 猜數字
+function checkGuess() {
+    let guess = parseInt(document.getElementById("guess").value);
+    let result = document.getElementById("result");
+    if (!guess || guess < 1 || guess > 100) {
+        result.innerText = "請輸入 1~100";
+        return;
+    }
+    count++;
+    if (guess > target) {
+        result.innerText = "📉 太大了";
+    } else if (guess < target) {
+        result.innerText = "📈 太小了";
+    } else {
+        result.innerText = "🎉 猜中了！";
+        saveScore(count);
+        showRank();
+    }
+    document.getElementById("count").innerText = "次數：" + count;
+}
+// 存排行榜
+function saveScore(score) {
+    let scores = JSON.parse(localStorage.getItem("scores")) || [];
+    scores.push(score);
+    scores.sort((a,b)=>a-b);
+    scores = scores.slice(0,5); // 只留前5名
+    localStorage.setItem("scores", JSON.stringify(scores));
+}
+// 顯示排行榜
+function showRank() {
+    let scores = JSON.parse(localStorage.getItem("scores")) || [];
+    let html = "";
+    scores.forEach((s,i)=>{
+        html += `${i+1}. ${s} 次<br>`;
+    });
+    document.getElementById("rank").innerHTML = html;
+}
+// 重開
+function restart() {
+    startGame();
+}
+// 預設顯示排行榜
+showRank();
+</script>
 </body>
 </html>
