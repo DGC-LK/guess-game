@@ -2,130 +2,449 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>猜數字遊戲 Pro+</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>多遊戲合輯 Pro+ (移動版)</title>
 <style>
+/* --- 全域樣式 --- */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Arial, sans-serif;
     background: linear-gradient(135deg, #74ebd5, #9face6);
     text-align: center;
-    padding: 20px;
+    padding: 0;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 .card {
     background: white;
     padding: 20px;
     border-radius: 20px;
+    width: 90%;
     max-width: 400px;
-    margin: auto;
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    box-sizing: border-box;
+    display: none; /* 預設隱藏所有畫面 */
+}
+/* --- 顯示選中畫面 --- */
+.card.active {
+    display: block;
 }
 h2 {
-    margin-bottom: 10px;
+    margin: 10px 0;
+    font-size: 28px;
 }
-input, button {
+button {
+    padding: 15px;
+    margin: 10px;
+    font-size: 18px;
+    width: 90%;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    background: #4CAF50;
+    color: white;
+    font-weight: bold;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+button:hover { background: #45a049; transform: scale(1.02); }
+button:active { transform: scale(0.98); }
+button.secondary { background: #888; }
+button.secondary:hover { background: #777; }
+input {
     padding: 12px;
     margin: 8px;
     font-size: 16px;
-    width: 80%;
+    width: 90%;
     border-radius: 10px;
-    border: none;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
 }
-button {
-    background: #4CAF50;
-    color: white;
-    cursor: pointer;
+
+/* --- 排行榜 & 資訊 --- */
+#result { font-size: 18px; margin-top: 10px; font-weight: bold; }
+.info-text { font-size: 18px; font-weight: bold; }
+.rank { text-align: left; margin-top: 15px; padding-left: 20px; font-size: 16px; }
+
+/* --- 貪吃蛇遊戲畫面 & 控制 --- */
+#snake-canvas {
+    border: 3px solid #333;
+    border-radius: 10px;
+    background: #f0f0f0;
+    margin: 10px auto;
+    display: block;
 }
-button:hover {
-    background: #45a049;
-}
-#result {
+.score-board {
+    display: flex;
+    justify-content: space-around;
     font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+/* 手機點擊控制區域 - 覆蓋在 canvas 上或獨立出來 */
+.snake-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 5px;
     margin-top: 10px;
 }
-.rank {
-    text-align: left;
-    margin-top: 15px;
+.ctrl-btn {
+    background: rgba(0,0,0,0.3);
+    color: white;
+    height: 50px;
+    padding: 0;
+    width: 100%;
+    margin: 0;
 }
+.ctrl-up { grid-column: 2; grid-row: 1; }
+.ctrl-left { grid-column: 1; grid-row: 2; }
+.ctrl-right { grid-column: 3; grid-row: 2; }
+.ctrl-down { grid-column: 2; grid-row: 3; }
+
+/* RWD 修飾 */
 @media (max-width: 600px) {
-    .card {
-        max-width: 100%;
-        padding: 15px;
-    }
+    .card { width: 95%; padding: 15px; }
     h2 { font-size: 24px; }
-    input, button { font-size: 14px; width: 90%; }
-    #result { font-size: 16px; }
+    button, input { font-size: 16px; }
 }
 </style>
 </head>
 <body>
-<div class="card">
-<h2>🎯 猜數字遊戲</h2>
-<button onclick="startGame()">🎮 開始遊戲</button>
-<div id="game" style="display:none;">
-    <p>請猜 1~100</p>
-    <input type="number" id="guess">
-    <button onclick="checkGuess()">猜！</button>
-    <p id="result"></p>
-    <p id="count"></p>
-    <button onclick="restart()">重新開始</button>
+
+<div class="card active" id="selection-screen">
+    <h2>🎮 遊戲合輯</h2>
+    <p>請選擇一個遊戲：</p>
+    <button onclick="showGame('guess')">🎯 猜數字遊戲</button>
+    <button onclick="showGame('snake')" style="background-color: #f44336;">🐍 貪吃蛇遊戲</button>
 </div>
-<h3>🏆 排行榜（最少次數）</h3>
-<div class="rank" id="rank"></div>
+
+<div class="card" id="guess-game-screen">
+    <h2>🎯 猜數字</h2>
+    <button class="secondary" onclick="showGame('selection')">⬅️ 回選擇頁</button>
+    <hr>
+    <div id="guess-game-play">
+        <p>請猜 1~100 (回車送出)</p>
+        <input type="number" id="guess-input" placeholder="輸入數字...">
+        <button id="guess-btn" onclick="checkGuess()">猜！</button>
+        <p id="guess-result"></p>
+        <p id="guess-count" class="info-text"></p>
+        <button id="guess-restart" class="secondary" onclick="restartGuessGame()" style="display:none;">🔄 再玩一次</button>
+    </div>
+    <hr>
+    <h3>🏆 排行榜（最少次數）</h3>
+    <div class="rank" id="guess-rank"></div>
 </div>
+
+<div class="card" id="snake-game-screen">
+    <h2>🐍 貪吃蛇</h2>
+    <button class="secondary" onclick="exitSnakeGame()">⬅️ 結束遊戲</button>
+    <hr>
+    
+    <div class="score-board">
+        <div>分數: <span id="snake-score">0</span></div>
+        <div style="color:blue">最高分: <span id="snake-high-score">0</span></div>
+    </div>
+    
+    <canvas id="snake-canvas" width="300" height="300"></canvas>
+    
+    <div id="snake-over-overlay" style="display:none; text-align:center;">
+        <h3 style="color:red">GAME OVER!</h3>
+        <p class="info-text">您的分數: <span id="snake-final-score">0</span></p>
+        <button onclick="restartSnakeGame()">🔄 再玩一次</button>
+    </div>
+
+    <div class="snake-controls">
+        <button class="ctrl-btn ctrl-up" onclick="changeSnakeDirection('up')">⬆️</button>
+        <button class="ctrl-btn ctrl-left" onclick="changeSnakeDirection('left')">⬅️</button>
+        <button class="ctrl-btn ctrl-right" onclick="changeSnakeDirection('right')">➡️</button>
+        <button class="ctrl-btn ctrl-down" onclick="changeSnakeDirection('down')">⬇️</button>
+    </div>
+</div>
+
 <script>
-let target = 0;
-let count = 0;
-// 開始遊戲（電腦出題）
-function startGame() {
-    target = Math.floor(Math.random() * 100) + 1;
-    count = 0;
-    document.getElementById("game").style.display = "block";
-    document.getElementById("result").innerText = "";
-    document.getElementById("count").innerText = "";
+// === 通用畫面管理 ===
+const screens = {
+    selection: document.getElementById('selection-screen'),
+    guess: document.getElementById('guess-game-screen'),
+    snake: document.getElementById('snake-game-screen')
+};
+
+function showGame(gameName) {
+    // 隱藏所有畫面
+    for (let key in screens) {
+        screens[key].classList.remove('active');
+    }
+    // 顯示指定畫面
+    if (screens[gameName]) {
+        screens[gameName].classList.add('active');
+        
+        // 進入遊戲時的特殊初始化
+        if (gameName === 'guess') {
+            restartGuessGame();
+            showGuessRank();
+        } else if (gameName === 'snake') {
+            startSnakeGame();
+        }
+    }
 }
-// 猜數字
+
+
+// === 猜數字遊戲邏輯 (優化版 + 回選擇頁支援) ===
+let guessTarget = 0;
+let guessCount = 0;
+const guessInput = document.getElementById("guess-input");
+const guessResult = document.getElementById("guess-result");
+const guessCountText = document.getElementById("guess-count");
+const guessBtn = document.getElementById("guess-btn");
+const guessRestartBtn = document.getElementById("guess-restart");
+
+// 監聽 Enter 鍵輸入
+guessInput.addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        checkGuess();
+    }
+});
+
+function restartGuessGame() {
+    guessTarget = Math.floor(Math.random() * 100) + 1;
+    guessCount = 0;
+    
+    // UI 狀態重置
+    guessResult.innerText = "";
+    guessCountText.innerText = "";
+    guessInput.value = "";
+    guessInput.disabled = false;
+    guessBtn.disabled = false;
+    guessRestartBtn.style.display = "none";
+    guessInput.focus();
+}
+
 function checkGuess() {
-    let guess = parseInt(document.getElementById("guess").value);
-    let result = document.getElementById("result");
+    let guess = parseInt(guessInput.value);
+    
     if (!guess || guess < 1 || guess > 100) {
-        result.innerText = "請輸入 1~100";
+        guessResult.innerText = "⚠️ 請輸入 1~100 的數字";
+        guessResult.style.color = "red";
         return;
     }
-    count++;
-    if (guess > target) {
-        result.innerText = "📉 太大了";
-    } else if (guess < target) {
-        result.innerText = "📈 太小了";
+    
+    guessCount++;
+    guessResult.style.color = "black";
+    
+    if (guess > guessTarget) {
+        guessResult.innerText = "📉 太大了";
+        guessInput.value = "";
+        guessInput.focus();
+    } else if (guess < guessTarget) {
+        guessResult.innerText = "📈 太小了";
+        guessInput.value = "";
+        guessInput.focus();
     } else {
-        result.innerText = "🎉 猜中了！";
-        saveScore(count);
-        showRank();
+        guessResult.innerText = `🎉 猜中了！答案是 ${guessTarget}`;
+        guessResult.style.color = "green";
+        saveGuessScore(guessCount);
+        showGuessRank();
+        
+        // 猜中後鎖定
+        guessInput.disabled = true;
+        guessBtn.disabled = true;
+        guessRestartBtn.style.display = "block";
     }
-    document.getElementById("count").innerText = "次數：" + count;
+    guessCountText.innerText = "次數：" + guessCount;
 }
-// 存排行榜
-function saveScore(score) {
-    let scores = JSON.parse(localStorage.getItem("scores")) || [];
+
+function saveGuessScore(score) {
+    let scores = JSON.parse(localStorage.getItem("guess_scores")) || [];
     scores.push(score);
     scores.sort((a,b)=>a-b);
     scores = scores.slice(0,5); // 只留前5名
-    localStorage.setItem("scores", JSON.stringify(scores));
+    localStorage.setItem("guess_scores", JSON.stringify(scores));
 }
-// 顯示排行榜
-function showRank() {
-    let scores = JSON.parse(localStorage.getItem("scores")) || [];
+
+function showGuessRank() {
+    let scores = JSON.parse(localStorage.getItem("guess_scores")) || [];
     let html = "";
-    scores.forEach((s,i)=>{
-        html += `${i+1}. ${s} 次<br>`;
+    if (scores.length === 0) {
+        html = "暫無紀錄";
+    } else {
+        scores.forEach((s,i)=>{
+            let medal = i === 0 ? "🥇" : (i === 1 ? "🥈" : (i === 2 ? "🥉" : "🏅"));
+            html += `${medal} 第 ${i+1} 名： ${s} 次<br>`;
+        });
+    }
+    document.getElementById("guess-rank").innerHTML = html;
+}
+
+
+// === 貪吃蛇遊戲邏輯 (手機控制版) ===
+const snakeCanvas = document.getElementById("snake-canvas");
+const snakeCtx = snakeCanvas.getContext("2d");
+const snakeScoreText = document.getElementById("snake-score");
+const snakeHighScoreText = document.getElementById("snake-high-score");
+const snakeFinalScoreText = document.getElementById("snake-final-score");
+const snakeOverOverlay = document.getElementById("snake-over-overlay");
+
+// 遊戲參數
+const gridSize = 15; // 每個格子的像素大小
+const gridCount = snakeCanvas.width / gridSize; // 畫布長寬格數
+let snakeGameLoop;
+let snakeData = []; // 蛇身座標數組 [{x:10, y:10}, ...]
+let snakeFood = {x: 0, y: 0};
+let snakeDirection = "right"; // 目前方向
+let snakeNextDirection = "right"; // 下一個將轉向的方向 (防止180度轉向)
+let snakeScore = 0;
+let snakeHighScore = parseInt(localStorage.getItem("snake_high_score")) || 0;
+let snakeIsGameOver = false;
+
+function startSnakeGame() {
+    // 初始化遊戲狀態
+    snakeData = [{x: Math.floor(gridCount/2), y: Math.floor(gridCount/2)}]; // 初始蛇頭在中間
+    snakeDirection = "right";
+    snakeNextDirection = "right";
+    snakeScore = 0;
+    snakeIsGameOver = false;
+    snakeScoreText.innerText = snakeScore;
+    snakeHighScoreText.innerText = snakeHighScore;
+    snakeOverOverlay.style.display = "none";
+    createSnakeFood();
+    
+    // 啟動遊戲循環 (每 100ms 移動一次，可以調整速度)
+    if (snakeGameLoop) clearInterval(snakeGameLoop);
+    snakeGameLoop = setInterval(gameTick, 100);
+}
+
+function exitSnakeGame() {
+    // 停止遊戲循環並回選擇頁
+    if (snakeGameLoop) clearInterval(snakeGameLoop);
+    showGame('selection');
+}
+
+function restartSnakeGame() {
+    startSnakeGame();
+}
+
+// 產生食物
+function createSnakeFood() {
+    let isValid = false;
+    while (!isValid) {
+        snakeFood.x = Math.floor(Math.random() * gridCount);
+        snakeFood.y = Math.floor(Math.random() * gridCount);
+        // 食物不能出現在蛇身
+        isValid = true;
+        for (let segment of snakeData) {
+            if (segment.x === snakeFood.x && segment.y === snakeFood.y) {
+                isValid = false;
+                break;
+            }
+        }
+    }
+}
+
+// 改變蛇方向 (防止反向轉向)
+function changeSnakeDirection(newDir) {
+    if (newDir === 'up' && snakeDirection !== 'down') snakeNextDirection = 'up';
+    if (newDir === 'down' && snakeDirection !== 'up') snakeNextDirection = 'down';
+    if (newDir === 'left' && snakeDirection !== 'right') snakeNextDirection = 'left';
+    if (newDir === 'right' && snakeDirection !== 'left') snakeNextDirection = 'right';
+}
+
+// 監聽鍵盤 (也支援電腦)
+document.addEventListener("keydown", function(event) {
+    if (!screens.snake.classList.contains('active')) return;
+    if (event.key === 'ArrowUp' || event.key === 'w') changeSnakeDirection('up');
+    if (event.key === 'ArrowDown' || event.key === 's') changeSnakeDirection('down');
+    if (event.key === 'ArrowLeft' || event.key === 'a') changeSnakeDirection('left');
+    if (event.key === 'ArrowRight' || event.key === 'd') changeSnakeDirection('right');
+});
+
+
+// 遊戲核心循環
+function gameTick() {
+    if (snakeIsGameOver) return;
+    
+    // 更新實際方向 (防止在同一次 tick 內連續改變兩次方向)
+    snakeDirection = snakeNextDirection;
+    
+    // 計算下一個頭部位置
+    let head = {...snakeData[0]};
+    if (snakeDirection === 'up') head.y--;
+    if (snakeDirection === 'down') head.y++;
+    if (snakeDirection === 'left') head.x--;
+    if (snakeDirection === 'right') head.x++;
+    
+    // === 1. 碰撞檢測 (牆壁或自己) ===
+    if (head.x < 0 || head.x >= gridCount || head.y < 0 || head.y >= gridCount || checkSelfCollision(head)) {
+        endSnakeGame();
+        return;
+    }
+    
+    // 將新頭部插入
+    snakeData.unshift(head);
+    
+    // === 2. 吃食物檢測 ===
+    if (head.x === snakeFood.x && head.y === snakeFood.y) {
+        // 吃到食物：增加分數，不需要刪除尾部，身體就會變長
+        snakeScore += 10;
+        snakeScoreText.innerText = snakeScore;
+        createSnakeFood();
+    } else {
+        // 沒吃到食物：正常移動，刪除最後一個尾部段，保持長度
+        snakeData.pop();
+    }
+    
+    // === 3. 重新繪製畫面 ===
+    drawGameScreen();
+}
+
+// 檢測是否撞到自己
+function checkSelfCollision(head) {
+    // 檢查從第 1 個段 (原來的頭) 開始的所有段
+    for (let i = 1; i < snakeData.length; i++) {
+        if (head.x === snakeData[i].x && head.y === snakeData[i].y) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// 遊戲結束
+function endSnakeGame() {
+    snakeIsGameOver = true;
+    clearInterval(snakeGameLoop);
+    snakeFinalScoreText.innerText = snakeScore;
+    snakeOverOverlay.style.display = "block";
+    
+    // 儲存高分
+    if (snakeScore > snakeHighScore) {
+        snakeHighScore = snakeScore;
+        localStorage.setItem("snake_high_score", snakeHighScore);
+        snakeHighScoreText.innerText = snakeHighScore;
+    }
+}
+
+// 繪製遊戲畫布
+function drawGameScreen() {
+    // 清空背景
+    snakeCtx.fillStyle = "#f0f0f0";
+    snakeCtx.fillRect(0, 0, snakeCanvas.width, snakeCanvas.width);
+    
+    // 繪製食物
+    snakeCtx.fillStyle = "#f44336"; // 紅色食物
+    snakeCtx.fillRect(snakeFood.x * gridSize, snakeFood.y * gridSize, gridSize - 1, gridSize - 1);
+    
+    // 繪製蛇身
+    snakeData.forEach((segment, index) => {
+        // 頭部深綠色，身體綠色
+        snakeCtx.fillStyle = (index === 0) ? "#2E7D32" : "#4CAF50";
+        // 留下一個像素的間隙，看起來像是由格組成
+        snakeCtx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 1, gridSize - 1);
     });
-    document.getElementById("rank").innerHTML = html;
 }
-// 重開
-function restart() {
-    startGame();
-}
-// 預設顯示排行榜
-showRank();
+
 </script>
 </body>
 </html>
