@@ -446,5 +446,34 @@ function drawGameScreen() {
 }
 
 </script>
+    <div style="margin-top:40px; text-align:center;">
+      <select id="fontSelector">
+        <option value="Algerian">Algerian</option>
+        <option value="Arial">Arial</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <!-- 可以加更多字體 -->
+      </select>
+      <select id="sizeSelector">
+        <option value="12">12</option>
+        <option value="16">16</option>
+        <option value="20">20</option>
+        <option value="32">32</option>
+        <!-- 可以加更多字號 -->
+      </select>
+      <span id="dgcText" style="font-family: Algerian; font-size: 12pt; margin-left: 10px;">DGC</span>
+    </div>
+
+    <script>
+    // 動態調整 DGC 樣式
+    const dgcText = document.getElementById('dgcText');
+    document.getElementById('fontSelector').addEventListener('change', function() {
+        dgcText.style.fontFamily = this.value;
+    });
+    document.getElementById('sizeSelector').addEventListener('change', function() {
+        dgcText.style.fontSize = this.value + "pt";
+    });
+    </script>
+
 </body>
 </html>
