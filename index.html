@@ -446,6 +446,21 @@ function drawGameScreen() {
 }
 
 </script>
-   <div style="margin-top:40px; text-align:center; font-size:22px; letter-spacing:4px; color:#333;">DGC</div>
+   <div id="footer-dgc">DGC</div>
+<style>
+#footer-dgc {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 20px; /* 距離底部20像素，可自行調整 */
+    text-align: center;
+    font-size: 22px;
+    color: #333;
+    letter-spacing: 6px;
+    z-index: 999;
+    pointer-events: none;   /* 不會擋住按鈕 */
+    user-select: none;      /* 不能被選取 */
+}
+</style>
 </body>
 </html>
