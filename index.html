@@ -5,23 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guess Game</title>
     <style>
-        /* Original game styling here */
-        /* Media query for mobile responsiveness */
-        @media (max-width: 600px) {
-            .card {
-                width: 100%;
-                padding: 10px;
-                font-size: 14px;
-            }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        input {
+            padding: 10px;
+            width: 50px;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+        .message {
+            margin-top: 20px;
+            font-size: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <!-- Original game UI goes here -->
-    </div>
+    <h1>Guess the Number!</h1>
+    <input type="number" id="guessInput" placeholder="Enter a number">
+    <button id="guessButton">Guess</button>
+    <div class="message" id="message"></div>
     <script>
-        // Original game logic here
+        let randomNumber = Math.floor(Math.random() * 100) + 1;
+        const messageDiv = document.getElementById('message');
+        document.getElementById('guessButton').addEventListener('click', function() {
+            const userGuess = parseInt(document.getElementById('guessInput').value);
+            if (userGuess === randomNumber) {
+                messageDiv.innerText = 'Congratulations! You guessed it!';
+            } else if (userGuess < randomNumber) {
+                messageDiv.innerText = 'Too low! Try again.';
+            } else {
+                messageDiv.innerText = 'Too high! Try again.';
+            }
+        });
     </script>
 </body>
 </html>
